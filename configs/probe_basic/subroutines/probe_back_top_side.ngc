@@ -50,10 +50,12 @@ o<Probe_back_top_side> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Y[#<step_off_width>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Call sub "probe_y_minus" to Probe y- side of Workpiece)
   o<probe_y_minus> call [#3014][#3015][#3016][#3017][#3018][#3019][#3032]
@@ -69,9 +71,11 @@ o<Probe_back_top_side> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
   G90
   F[#<probe_traverse_fr>]
   G38.3 Y[#<y_minus_zero_edge>]
+  o<mymill_probe_assert_no_contact> call
 
   (probe mode rules for WCO or probe position measuring only)
   o120 if [#<probe_mode> EQ 0]

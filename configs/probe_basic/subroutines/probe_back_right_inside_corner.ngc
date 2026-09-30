@@ -51,10 +51,12 @@ o<probe_back_right_inside_corner> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 X-[#<step_off_width>] Y-[#<step_off_width>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe X Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   G90
   (Current X Position including offsets in current program units)
@@ -74,6 +76,7 @@ o<probe_back_right_inside_corner> sub
   G90
   F[#<probe_traverse_fr>]
   G38.3 X[#<x_start>]
+  o<mymill_probe_assert_no_contact> call
 
   (Current Y Position including offsets in current program units)
   #<y_start> = #5421
@@ -92,14 +95,17 @@ o<probe_back_right_inside_corner> sub
   G90
   F[#<probe_traverse_fr>]
   G38.3 Y[#<y_start>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Completion Move to Z Clearance Plane, and X Zero, Y Zero)
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
   G90
   F[#<probe_traverse_fr>]
   G38.3 X[#<x_plus_zero_edge>] Y[#<y_plus_zero_edge>]
+  o<mymill_probe_assert_no_contact> call
 
   (probe mode rules for WCO or probe position measuring only)
   o130 if [#<probe_mode> EQ 0]

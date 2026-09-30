@@ -60,10 +60,12 @@ o<probe_corner_y_plus_edge_angle> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 X-[#<step_off_width>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe X Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   #<p1y> = #5421
 
@@ -81,14 +83,17 @@ o<probe_corner_y_plus_edge_angle> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, Traverse Workpiece at Z Clearance plane)
   F[#<probe_traverse_fr>]
   G38.3 X[#<step_off_width>] Y-[#<step_off_width>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move,to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   #<p2x> = #5420
 
@@ -106,6 +111,7 @@ o<probe_corner_y_plus_edge_angle> sub
   G91
   F[#<probe_fast_fr>]
   G38.3 X[#<edge_width>]
+  o<mymill_probe_assert_no_contact> call
 
   #<p3x> = #5420
 
@@ -141,9 +147,11 @@ o<probe_corner_y_plus_edge_angle> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
   G90
   F[#<probe_traverse_fr>]
   G38.3 X[#<c1x>] Y[#<c1y>]
+  o<mymill_probe_assert_no_contact> call
 
   (probe mode rules for WCO,Rotation and probe position measuring only)
   o140 if [#<probe_mode> EQ 0 AND #<wco_rotation> EQ 0]

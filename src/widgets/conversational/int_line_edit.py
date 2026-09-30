@@ -1,15 +1,15 @@
-from qtpy.QtGui import QIntValidator
 from qtpy.QtCore import Property
-from qtpy.QtWidgets import QLineEdit
 
 from qtpyvcp.widgets.input_widgets.line_edit import VCPLineEdit
+
+from .expression_evaluator import ExpressionError, evaluate_integer_expression
 
 
 class IntLineEdit(VCPLineEdit):
     def __init__(self, parent=None):
         super(IntLineEdit, self).__init__(parent)
         self._default_value = 0
-        self.setValidator(QIntValidator())
+        self.editingFinished.connect(self._normalize_text)
 
     @Property(int)
     def default_value(self):
@@ -24,8 +24,15 @@ class IntLineEdit(VCPLineEdit):
         return 'number:int'
 
     def value(self):
-        return int(self.text())
+        return evaluate_integer_expression(self.text())
+
+    def _normalize_text(self):
+        try:
+            value = self.value() if self.text() else self._default_value
+        except ExpressionError:
+            value = self._default_value
+        self.setText('{:d}'.format(value))
 
     def focusOutEvent(self, evt):
-        self.setText('{:d}'.format(self.value() if self.text() else self._default_value))
+        self._normalize_text()
         super(IntLineEdit, self).focusOutEvent(evt)

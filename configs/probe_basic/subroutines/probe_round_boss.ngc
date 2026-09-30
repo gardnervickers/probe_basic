@@ -61,10 +61,12 @@ o<probe_round_boss> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 X-[[#<diameter_hint> / 2] + [#<step_off_width>]]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe X Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Call sub "probe_x_plus" to Probe x+ side of Workpiece)
   o<probe_x_plus> call [#3014][#3015][#3016][#3017][#3018][#3019][#3032]
@@ -75,15 +77,18 @@ o<probe_round_boss> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Positioning move in X, X Hint + Step Off Width at Rapid Speed)
   G91
   F[#<probe_traverse_fr>]
   G38.3 X[#<diameter_hint> + #<step_off_width> + #<xy_clearance>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe X Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Call sub "probe_x_minus" to Probe x- side of Workpiece)
   o<probe_x_minus> call [#3014][#3015][#3016][#3017][#3018][#3019][#3032]
@@ -99,18 +104,22 @@ o<probe_round_boss> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
   G90
   F[#<probe_traverse_fr>]
   G38.3 X[#<x_center_probed>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, Y hint/2 + Step Off Width)
   G91
   F[#<probe_traverse_fr>]
   G38.3 Y-[[#<diameter_hint> / 2] + [#<step_off_width>]]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Call sub "probe_y_plus" to Probe y+ side of Workpiece)
   o<probe_y_plus> call [#3014][#3015][#3016][#3017][#3018][#3019][#3032]
@@ -121,15 +130,18 @@ o<probe_round_boss> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Positioning move in Y, Y Hint + Step Off Width at Rapid Speed)
   G91
   F[#<probe_traverse_fr>]
   G38.3 Y[#<diameter_hint> + #<step_off_width> + #<xy_clearance>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Call sub "probe_y_minus" to Probe y- side of Workpiece)
   o<probe_y_minus> call [#3014][#3015][#3016][#3017][#3018][#3019][#3032]
@@ -146,20 +158,24 @@ o<probe_round_boss> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Move to Y Center)
   G90
   F[#<probe_traverse_fr>]
   G38.3 Y[#<y_center_probed>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe X Positioning Move, X hint/2 + Step Off Width)
   G91
   F[#<probe_traverse_fr>]
   G38.3 X-[[#<diameter_hint> / 2] + [#<step_off_width>]]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe X Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Call sub "probe_x_plus" to Probe x+ side of Workpiece)
   o<probe_x_plus> call [#3014][#3015][#3016][#3017][#3018][#3019][#3032]
@@ -170,14 +186,17 @@ o<probe_round_boss> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Positioning move in X, X Hint + Step Off Width at Rapid Speed)
   F[#<probe_traverse_fr>]
   G38.3 X[#<diameter_hint> + #<step_off_width> + #<xy_clearance>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe X Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Call sub "probe_x_minus" to Probe x- side of Workpiece)
   o<probe_x_minus> call [#3014][#3015][#3016][#3017][#3018][#3019][#3032]
@@ -206,18 +225,22 @@ o<probe_round_boss> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
   G90
   F[#<probe_traverse_fr>]
   G38.3 X[#<x_center_probed>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, Y hint/2 + Step Off Width)
   G91
   F[#<probe_traverse_fr>]
   G38.3 Y-[[#<diameter_hint> / 2] + [#<step_off_width>]]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Call sub "probe_y_plus" to Probe y+ side of Workpiece)
   o<probe_y_plus> call [#3014][#3015][#3016][#3017][#3018][#3019][#3032]
@@ -228,14 +251,17 @@ o<probe_round_boss> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Positioning move in Y, Y Hint + Step Off Width at Rapid Speed)
   F[#<probe_traverse_fr>]
   G38.3 Y[#<diameter_hint> + #<step_off_width> + #<xy_clearance>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
   G38.3 Z-[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Call sub "probe_y_minus" to Probe y- side of Workpiece)
   o<probe_y_minus> call [#3014][#3015][#3016][#3017][#3018][#3019][#3032]
@@ -269,9 +295,11 @@ o<probe_round_boss> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
   G90
   F[#<probe_traverse_fr>]
   G38.3 X[#<x_center_probed>] Y[#<y_center_probed>]
+  o<mymill_probe_assert_no_contact> call
 
   #<x_zero> = [#<x_center_probed> + #<workspace_x>]
 

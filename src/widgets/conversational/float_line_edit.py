@@ -1,8 +1,8 @@
 from qtpy.QtCore import Property
-from qtpy.QtGui import QDoubleValidator
-from qtpy.QtWidgets import QLineEdit
 
 from qtpyvcp.widgets.input_widgets.line_edit import VCPLineEdit
+
+from .expression_evaluator import ExpressionError, evaluate_number_expression
 
 
 class FloatLineEdit(VCPLineEdit):
@@ -10,8 +10,7 @@ class FloatLineEdit(VCPLineEdit):
         super(FloatLineEdit, self).__init__(parent)
         self._default_value = 0.
         self._format_string = "{0:.3f}"
-        self.setValidator(QDoubleValidator())
-        self.validator().setNotation(QDoubleValidator.StandardNotation)
+        self.editingFinished.connect(self._normalize_text)
 
     @Property(float)
     def default_value(self):
@@ -34,12 +33,17 @@ class FloatLineEdit(VCPLineEdit):
         return 'number:float'
 
     def value(self):
-        return float(self.text())
+        return evaluate_number_expression(self.text())
+
+    def _normalize_text(self):
+        try:
+            value = evaluate_number_expression(self.text())
+        except ExpressionError:
+            self.setText(self._format_string.format(self._default_value))
+        else:
+            self.setText(self._format_string.format(value))
 
     def focusOutEvent(self, evt):
-        try:
-            float(self.text())
-        except ValueError:
-            self.setText(self._format_string.format(self._default_value))
+        self._normalize_text()
 
         super(FloatLineEdit, self).focusOutEvent(evt)

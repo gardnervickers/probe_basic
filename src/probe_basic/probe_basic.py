@@ -8,14 +8,16 @@ import linuxcnc
 
 from qtpy.QtCore import Slot, QRegExp, Qt, QTimer
 from qtpy.QtGui import QFontDatabase, QRegExpValidator, QTextCursor
-from qtpy.QtWidgets import QAbstractButton
-from qtpy.QtWidgets import QAction, QWidget
+from qtpy.QtWidgets import QAbstractButton, QHBoxLayout
+from qtpy.QtWidgets import QAction, QWidget, QButtonGroup
 from qtpy import uic
 
 from qtpyvcp import actions
 from qtpyvcp.utilities import logger
 from qtpyvcp.widgets.form_widgets.main_window import VCPMainWindow
 from qtpyvcp.utilities.settings import getSetting, setSetting
+from .rotary_probe_panel import RotaryProbePanel
+from .virtual_input_guard import install_virtual_input_guard
 
 sys.path.insert(0,'/usr/lib/python3/dist-packages/probe_basic')
 from . import probe_basic_rc
@@ -30,6 +32,7 @@ class ProbeBasic(VCPMainWindow):
     """Main window class for the ProbeBasic VCP."""
     def __init__(self, *args, **kwargs):
         super(ProbeBasic, self).__init__(*args, **kwargs)
+        install_virtual_input_guard()
         self.filesystemtable.sortByColumn(3, Qt.DescendingOrder)
         self.filesystemtable_2.sortByColumn(3, Qt.DescendingOrder)
         self.run_from_line_Num.setValidator(QRegExpValidator(QRegExp("[0-9]*")))
@@ -72,6 +75,16 @@ class ProbeBasic(VCPMainWindow):
         self.load_user_dros()
 
         self.load_offset_dro()
+
+        self.load_rotary_probe_panel()
+        from mymill_vcp.navigation import place_auto_stock_center, place_two_face_center
+        place_two_face_center(self)
+        place_auto_stock_center(self)
+        # Custom pages may opt into stock sections after those sections exist.
+        for page in self.user_tabs.values():
+            install = getattr(page, "install_in_window", None)
+            if callable(install):
+                install(self)
 
         # Set jog display page from [DISPLAY] GEOMETRY in the INI.
         self._lock_jog_display_to_ini_geometry()
@@ -117,7 +130,7 @@ class ProbeBasic(VCPMainWindow):
             for i in range(self.tabWidget.count()):
                 self.startup_tab_combobox.addItem(self.tabWidget.tabText(i))
             # Set ComboBox to saved tab text, or default to first tab
-            idx = self.startup_tab_combobox.findText(startup_tab_text)
+            idx = self.startup_tab_combobox.findText("MANUAL" if startup_tab_text == "POWERFEED" else startup_tab_text)
             if idx != -1:
                 self.startup_tab_combobox.setCurrentIndex(idx)
             else:
@@ -127,6 +140,29 @@ class ProbeBasic(VCPMainWindow):
             # Set the main tab widget to the correct tab at startup
             self.set_startup_tab_by_text(self.startup_tab_combobox.currentText())
         # --- End Startup Tab Selection Logic ---
+
+        # --- Startup Sidebar Tab Selection Logic ---
+        # Filled from the sidebar buttons rather than the .ui's static items:
+        # the USER button takes the loaded user tab's own label, and is hidden
+        # when no sidebar user tab exists, so a fixed list would go stale.
+        # load_user_tabs() has already run by this point, so both are final.
+        if hasattr(self, "sidebar_widget") and hasattr(self, "startup_sb_tab_combobox"):
+            self._populate_startup_sb_tab_combobox()
+            sb_setting = getSetting("startup-settings.user-startup-sb-tab")
+            sb_saved = sb_setting.getValue() if sb_setting is not None else None
+            sb_idx = self._resolve_startup_sb_tab_index(sb_saved)
+            self.startup_sb_tab_combobox.setCurrentIndex(sb_idx if sb_idx != -1 else 0)
+            self.startup_sb_tab_combobox.currentIndexChanged.connect(
+                self.on_startup_sb_tab_combobox_changed)
+            self.set_startup_sb_tab(self.startup_sb_tab_combobox.currentData())
+        # --- End Startup Sidebar Tab Selection Logic ---
+
+        # QtPyVCP 5 has no flashOnStyleClass support. Reuse the existing
+        # paused-state style rule without changing the action or its lockouts.
+        self._cycle_start_flash_timer = QTimer(self)
+        self._cycle_start_flash_timer.setInterval(500)
+        self._cycle_start_flash_timer.timeout.connect(self._flash_cycle_start)
+        self._cycle_start_flash_timer.start()
 
     def _apply_jog_display_from_geometry(self):
         if not hasattr(self, "jogDisplay"):
@@ -385,13 +421,16 @@ class ProbeBasic(VCPMainWindow):
 
         for user_tabs_path in user_tabs_paths:
             user_tabs_path = os.path.expanduser(user_tabs_path)
-            user_tab_folders = os.listdir(user_tabs_path)
+            user_tab_folders = sorted(os.listdir(user_tabs_path))
             for user_tab in user_tab_folders:
                 if not os.path.isdir(os.path.join(user_tabs_path, user_tab)):
                     continue
 
-                module_name = "user_tab." + os.path.basename(user_tabs_path) + "." + user_tabs_path
-                spec = importlib.util.spec_from_file_location(module_name, os.path.join(os.path.dirname(user_tabs_path), user_tab, user_tab + ".py"))
+                ui_module_path = os.path.join(user_tabs_path, user_tab, user_tab + ".py")
+                if not os.path.isfile(ui_module_path):
+                    continue
+                module_name = "user_tab." + os.path.basename(os.path.normpath(user_tabs_path)) + "." + user_tab
+                spec = importlib.util.spec_from_file_location(module_name, ui_module_path)
                 self.user_tab_modules[module_name] = importlib.util.module_from_spec(spec)
                 sys.modules[module_name] = self.user_tab_modules[module_name]
                 spec.loader.exec_module(self.user_tab_modules[module_name])
@@ -410,6 +449,22 @@ class ProbeBasic(VCPMainWindow):
         if sidebar_loaded == False:
             self.user_sb_tab.hide()
             self.plot_tab.setStyleSheet(self.user_sb_tab.styleSheet())
+
+    def load_rotary_probe_panel(self):
+        # The stock mill UI rotary page is Page6, selected by the ROTARY AXIS
+        # probe-group button.
+        page = getattr(self, "Page6", None) or self.findChild(QWidget, "Page6")
+        if page is None:
+            LOG.warning("Probe Basic rotary page Page6 was not found.")
+            return
+
+        layout = page.layout()
+        if layout is None:
+            layout = QHBoxLayout(page)
+            layout.setContentsMargins(0, 0, 0, 0)
+
+        self.rotary_probe_panel = RotaryProbePanel(page)
+        layout.addWidget(self.rotary_probe_panel)
 
     @Slot(QAbstractButton)
     def on_probetabGroup_buttonClicked(self, button):
@@ -526,6 +581,76 @@ class ProbeBasic(VCPMainWindow):
             parent.mdiEntry.setFocus()
             parent.mdiEntry.setCursorPosition(cursor_pos + 1)
             parent.mdiEntry.deselect()
+
+    def _sidebar_tab_buttons(self):
+        """The sidebar page buttons, in page order."""
+        group = getattr(self, "sidebartabGroup", None)
+        if group is None:
+            group = self.findChild(QButtonGroup, "sidebartabGroup")
+        if group is None:
+            return []
+        buttons = [b for b in group.buttons() if b.property('page') is not None]
+        return sorted(buttons, key=lambda b: int(b.property('page')))
+
+    def _populate_startup_sb_tab_combobox(self):
+        """List the sidebar buttons, with each item carrying its page index.
+
+        isHidden() rather than isVisible(): the window has not been shown yet
+        at this point, so isVisible() is False for every button, whereas
+        isHidden() is True only for one explicitly hidden -- the USER button
+        when no sidebar user tab loaded.
+        """
+        combo = self.startup_sb_tab_combobox
+        combo.clear()
+        for button in self._sidebar_tab_buttons():
+            if button.isHidden():
+                continue
+            combo.addItem(button.text(), int(button.property('page')))
+
+    def _resolve_startup_sb_tab_index(self, saved_value):
+        """Saved sidebar setting -> combobox index, by page number or label."""
+        combo = self.startup_sb_tab_combobox
+        if combo.count() == 0:
+            return -1
+        value_text = "" if saved_value is None else str(saved_value).strip()
+        if not value_text:
+            return -1
+        if value_text.isdigit():
+            idx = combo.findData(int(value_text))
+            if idx != -1:
+                return idx
+        for idx in range(combo.count()):
+            if combo.itemText(idx).strip().upper() == value_text.upper():
+                return idx
+        return -1
+
+    def on_startup_sb_tab_combobox_changed(self, index):
+        """Save the sidebar selection for next startup; leave the current page alone."""
+        page = self.startup_sb_tab_combobox.itemData(index)
+        if page is not None:
+            setSetting("startup-settings.user-startup-sb-tab", int(page))
+
+    def set_startup_sb_tab(self, page):
+        """Show a sidebar page and check its button so the group agrees."""
+        if page is None or not hasattr(self, "sidebar_widget"):
+            return
+        page = int(page)
+        for button in self._sidebar_tab_buttons():
+            if int(button.property('page')) == page:
+                button.setChecked(True)
+                break
+        self.sidebar_widget.setCurrentIndex(page)
+
+
+    def _flash_cycle_start(self):
+        button = self.cycle_start_button
+        paused = button.property("style") == "active" and button.isEnabled()
+        flash = not bool(button.property("flashState")) if paused else False
+        if button.property("flashState") != flash:
+            button.setProperty("flashState", flash)
+            button.style().unpolish(button)
+            button.style().polish(button)
+            button.update()
 
     def set_startup_tab_by_text(self, tab_text):
         """Set the main tab widget to the tab matching tab_text."""

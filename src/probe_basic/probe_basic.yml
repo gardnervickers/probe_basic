@@ -487,6 +487,11 @@ settings:
     persistent: true
     options: ["MAIN", "FILE", "ATC", "TOOL", "OFFSETS", "PROBING", "CONVERSATIONAL", "SETTINGS", "STATUS", "USER"]
 
+  startup-settings.user-startup-sb-tab:
+    description: sidebar page to show at startup.
+    default_value: 0
+    persistent: true
+
   startup-settings.usb-hide-show:
     description: hide or show usb file manager
     persistent: true

@@ -61,6 +61,7 @@ o<probe_ridge_y> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Y-[[#<y_hint_ridge_valley>/2] + #<step_off_width>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
@@ -75,10 +76,12 @@ o<probe_ridge_y> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
 
   (Positioning move in Y, Y Hint + Step Off Width at Rapid Speed)
   F[#<probe_traverse_fr>]
   G38.3 Y[#<y_hint_ridge_valley> + #<step_off_width>]
+  o<mymill_probe_assert_no_contact> call
 
   (Probe Y Positioning Move, to Probing Depth)
   F[#<probe_fast_fr>]
@@ -108,9 +111,11 @@ o<probe_ridge_y> sub
   G91
   F[#<probe_traverse_fr>]
   G38.3 Z[#<z_probe_stack>]
+  o<mymill_probe_assert_no_contact> call
   G90
   F[#<probe_traverse_fr>]
   G38.3 Y[#<y_center_probed>]
+  o<mymill_probe_assert_no_contact> call
 
   (probe mode rules for WCO or probe position measuring only)
   o110 if [#<probe_mode> EQ 0]

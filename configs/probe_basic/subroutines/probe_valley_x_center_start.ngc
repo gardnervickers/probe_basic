@@ -74,6 +74,7 @@ o<probe_valley_x_center_start> sub
   G90
   F[#<probe_traverse_fr>]
   G38.3 X[#<x_center_probed>]
+  o<mymill_probe_assert_no_contact> call
 
   (probe mode rules for WCO or probe position measuring only)
   o110 if [#<probe_mode> EQ 0]
