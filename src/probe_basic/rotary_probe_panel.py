@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import subprocess
 import time
 
 from mymill_vcp.mdi import abort_and_wait, wait_for_completion
@@ -76,7 +75,6 @@ WCS_OPTIONS = [
     ("G59.3", 9),
 ]
 WCS_BY_INDEX = {index: code for code, index in WCS_OPTIONS}
-DEFAULT_PROBE_TOOL_NUMBER = 99
 
 
 def _ini_file():
@@ -467,55 +465,7 @@ QCheckBox {
             return False, "Interpreter must be idle"
         if not bool(getattr(self._stat, "inpos", True)):
             return False, "Machine must be in position"
-        if not self._all_joints_homed():
-            return False, "Home all joints first"
-        if self._spindle_enabled():
-            return False, "Stop spindle first"
-        wireless_selected = self._get_hal_bool("probe-manager.wireless-selected")
-        if wireless_selected is None:
-            return False, "Probe source state unknown"
-        if not wireless_selected:
-            return False, "Select wireless probe first"
-        current_tool = self._current_tool_number()
-        if current_tool is None:
-            return False, "Spindle tool state unknown"
-        probe_tool = self._configured_probe_tool_number()
-        if current_tool != probe_tool:
-            return False, "Load probe tool T{} first".format(probe_tool)
         return True, "Ready - writes {}".format(self._selected_wcs_code())
-
-    def _current_tool_number(self):
-        for attr_name in ("tool_in_spindle", "tool", "current_tool"):
-            tool_number = getattr(self._stat, attr_name, None)
-            if tool_number is not None:
-                return int(tool_number)
-        return None
-
-    def _configured_probe_tool_number(self):
-        parameter_file = self._parameter_file_path()
-        if parameter_file is not None:
-            try:
-                with open(parameter_file, "r") as handle:
-                    for line in handle:
-                        fields = line.split()
-                        if len(fields) >= 2 and fields[0] == "3014":
-                            return int(float(fields[1]))
-            except (OSError, ValueError):
-                pass
-        return DEFAULT_PROBE_TOOL_NUMBER
-
-    def _parameter_file_path(self):
-        if self._ini_file is None:
-            return None
-        parameter_file = self._ini_file.find("RS274NGC", "PARAMETER_FILE")
-        if not parameter_file:
-            return None
-        if os.path.isabs(parameter_file):
-            return parameter_file
-        ini_name = os.getenv("INI_FILE_NAME")
-        if ini_name:
-            return os.path.join(os.path.dirname(os.path.abspath(ini_name)), parameter_file)
-        return parameter_file
 
     def _selected_wcs_code(self):
         wcs_index = self._wcs_combo.currentData()
@@ -593,53 +543,3 @@ QCheckBox {
         self._worker_action = None
         self._refresh()
         self._set_status_message(message, hold_seconds=8.0)
-
-    def _halcmd(self, *args):
-        try:
-            return subprocess.run(
-                ["halcmd", *args],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-        except Exception:
-            return None
-
-    def _get_hal_bool(self, pin_name):
-        result = self._halcmd("getp", pin_name)
-        if result is None:
-            return None
-        value = result.stdout.strip().lower()
-        if value in {"1", "true"}:
-            return True
-        if value in {"0", "false"}:
-            return False
-        return None
-
-    def _all_joints_homed(self):
-        hal_homed = self._get_hal_bool("all-joints-homed.out")
-        if hal_homed is not None:
-            return hal_homed
-
-        joint_homed = []
-        joints = getattr(self._stat, "joint", [])
-        for joint in joints[: self._joint_count]:
-            if isinstance(joint, dict):
-                joint_homed.append(bool(joint.get("homed", False)))
-
-        if not joint_homed and hasattr(self._stat, "homed"):
-            try:
-                joint_homed = [bool(value) for value in list(self._stat.homed)[: self._joint_count]]
-            except Exception:
-                joint_homed = []
-
-        return bool(joint_homed) and all(joint_homed)
-
-    def _spindle_enabled(self):
-        spindle_allowed = self._get_hal_bool("spindle-enable-allowed-pin")
-        if spindle_allowed is not None:
-            return spindle_allowed
-
-        spindle_list = getattr(self._stat, "spindle", None)
-        spindle = spindle_list[0] if spindle_list else {}
-        return bool(spindle.get("enabled", False))

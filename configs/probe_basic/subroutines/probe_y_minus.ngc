@@ -42,7 +42,6 @@ o<probe_y_minus> sub
   (Initiate Fast Y- Probe)
   G91
   F[#<probe_fast_fr>]
-  o<mymill_probe_ready> call
   G38.2 y-[#<max_xy_distance>]
   #<y_minus_probed> = #5062
 
@@ -64,7 +63,6 @@ o<probe_y_minus> sub
       (Initiate Slow Y- Probe)
       G91
       F[#<probe_slow_fr>]
-      o<mymill_probe_ready> call
       G38.2 Y-[#<xy_clearance> * 2]
       #<y_minus_probed> = #5062
       G90
